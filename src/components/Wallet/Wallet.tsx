@@ -19,26 +19,18 @@ declare global {
 // window.MyNamespace = window.MyNamespace || {};
 
 export const Wallet: FC = () => {
-    const [publicKeyProvider, setPublicKey] = useState<string | undefined>('');
-    const [provider, setProvider] = useState<any>(null);
-    const [isConnect, setIsConnect] = useState<boolean>(false);
     const network = WalletAdapterNetwork.Testnet;
     const endpoint = useMemo(() => clusterApiUrl(network), [network]);
-    const [userSOLBalance, setSOLBalance] = useState<number>();
-    // const { publicKey } = useWallet()
-    // const connection = new Connection(endpoint);
-    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+    const connection = new Connection(endpoint);
 
-    const [infoWallet, setInfoWallet] = useState<object>({
-        balance: Float64Array,
-        key: publicKeyProvider
-    })
-
+    const [balance, setBalance] = useState<Number>()
 
     const wallets = [
         new PhantomWalletAdapter({ network })
     ];
+
     const wallet = useAnchorWallet()
+
     useEffect(() => {
         // const wallet = useWallet()
         if (wallet && wallet.publicKey.toBase58()) {
@@ -49,9 +41,9 @@ export const Wallet: FC = () => {
     }, [])
 
 
-    // useEffect(() => {
-    //     console.log(wallets[0].connected)
-    // }, [wallets]);
+    useEffect(() => {
+        send();
+    }, [wallets]);
 
     const send = async () => {
         try {
@@ -64,6 +56,7 @@ export const Wallet: FC = () => {
             console.log(walletun);
             let balance = await connection.getBalance(walletun);
             console.log(`${balance / LAMPORTS_PER_SOL} SOL`);
+            setBalance(balance / LAMPORTS_PER_SOL)
             if (wallet && wallet.publicKey.toBase58()) {
                 // const SOL = connection.getAccountInfo(wallet.publicKey)
                 // console.log(SOL)
@@ -82,82 +75,41 @@ export const Wallet: FC = () => {
         }
     }
 
-    const logIn = () => {
-        // console.log(wallets)
-        console.log(wallets[0].connected)
-        // console.log(wallets[0].publicKey?.toString())
-    }
-
-    const logOut = async () => {
-        setTimeout(() => console.log(wallets[0].connected), 1000)
-    }
-
-    const phantomWalletConnect = async () => {
-        try {
-            let provider = null;
-            if ("solana" in window) {
-                await window.solana.connect();
-                provider = window.solana;
-                if (provider.isPhantom) {
-                    await provider.connect();
-                    setProvider(provider)
-                    console.log(provider)
-                    let key = provider._publicKey
-                    console.log(key)
-                    setIsConnect(true)
-                    return provider;
-                }
-            } else {
-                console.log("It is not a Phantom");
-            }
-
-            let key = provider._publicKey
-            setPublicKey(key)
-        }
-        catch (e) {
-            console.log(e)
-        }
-    }
-
-    const phantomWalletDisconnect = async () => {
-        try {
-            await window.solana.disconnect();
-            setIsConnect(false)
-            // window.solana.on('disconnect', () => console.log('disconnect!'))
-
-        }
-        catch (e) {
-            console.log(e)
-        }
+    const constSend2 = () => {
+        console.log(balance)
     }
 
     return (
-        <ConnectionProvider endpoint={endpoint} config={{commitment: "finalized"}}>
-             {/* <WalletProvider wallets={wallets} autoConnect> */}
-                <WalletModalProvider>
-                    <div className="App">
-                        {/* <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <ConnectionProvider endpoint={endpoint} config={{ commitment: "finalized" }}>
+            {/* <WalletProvider wallets={wallets} autoConnect> */}
+            <WalletModalProvider>
+                <div className="App">
+                    {/* <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                                      <div style={{ margin: 40 }}>Wallet</div>
                                      <button onClick={send} style={{ padding: 10 }}>Отправить 1,5 токена</button>
                                      <button onClick={() => phantomWalletDisconnect()} style={{ padding: 10, marginTop: 20 }}>Отключится</button>
                                      <WalletDisconnectButton style={{ backgroundColor: 'yellow' }} onClick={logOut} />
                                  </div> */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <h1 style={{ margin: 40 }}>Подключится к phantom</h1>
-                            {/* <button onClick={() => phantomWalletConnect()} style={{ padding: 10, marginTop: 20 }}>Подлючится</button> */}
-                            <button onClick={send} style={{ padding: 10, marginTop: 20, marginBottom: 20 }}>Получить</button>
-
-                            {/* <WalletConnectButton /> */}
-                            <WalletMultiButton />
-                            <WalletDisconnectButton style={{ backgroundColor: 'yellow' }} onClick={logOut} />
-                            <div className='balance-info'>
-                                {wallets[0].publicKey?.toString()}
-                            </div>
+                        <div style={{color: 'black', position: 'relative', left: '8px'}}>
+                            <>
+                                Баланс - {balance}
+                            </>
+                        </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <h1 style={{ margin: 40 }}>Подключится к phantom</h1>
+                        {/* <button onClick={() => phantomWalletConnect()} style={{ padding: 10, marginTop: 20 }}>Подлючится</button> */}
+                        <button onClick={constSend2} style={{ padding: 10, marginTop: 20, marginBottom: 20 }}>Получить</button>
+                        {/* <WalletConnectButton /> */}
+                        <WalletMultiButton />
+                        <WalletDisconnectButton style={{ backgroundColor: 'yellow' }} />
+                        <div className='balance-info'>
+                            {wallets[0].publicKey?.toString()}
                         </div>
                     </div>
-                </WalletModalProvider>
+                </div>
+            </WalletModalProvider>
             {/* </WalletProvider> */}
-            </ConnectionProvider >
+        </ConnectionProvider >
     )
 }
 
